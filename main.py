@@ -3,7 +3,7 @@ from config import Config
 from dataset import MyDataset
 from transformers import AutoTokenizer, AutoModel, logging
 logging.set_verbosity_error()
-from torch.optim import AdamW
+from torch.optim import AdamW, SGD
 from torch import nn
 from torch.utils.data import DataLoader
 from model import BertForTextClassfication
@@ -12,6 +12,7 @@ import time
 from test import do_test
 from evaluation import kl_sim_score
 
+start = time.time()
 config = Config()
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
@@ -26,10 +27,12 @@ tokenizer = AutoTokenizer.from_pretrained(config.pretrained_model)
 
 # get model
 model = BertForTextClassfication().to(device)
-optimizer = AdamW(model.parameters(), lr=config.learning_rate)
-criterion = nn.MSELoss(reduction='sum')
+# optimizer = AdamW(model.parameters(), lr=config.learning_rate)
+optimizer = SGD(model.parameters(), lr=config.learning_rate)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', min_lr=1e-6, factor=0.5)
+# criterion = nn.L1Loss()
+criterion = nn.SmoothL1Loss()
 
-start = time.time()
 score_max = float("-inf")
 for epoch in range(config.num_train_epochs):
     loss_sum, count = 0, 0
@@ -69,7 +72,7 @@ for epoch in range(config.num_train_epochs):
         print(f"已保存最佳模型")
 
     torch.save(model.state_dict(), config.save_model_last)
-
+    scheduler.step(score)
     end = time.time()
     print(f"运行时间：{(end-start)/60%60:.4f} min")
 

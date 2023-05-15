@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader
 from model import BertForTextClassfication
 from evaluation import kl_sim_score
 from collections import deque
+import transformers
+transformers.logging.set_verbosity_error()
 
 def get_predict_like_probability_file(all_pred):
     all_pred = deque(all_pred)
