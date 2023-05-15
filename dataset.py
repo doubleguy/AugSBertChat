@@ -34,25 +34,18 @@ class MyDataset(Dataset):
         query = self.query[index]
         reply = self.reply[index]
         label = self.label[index]
-        if len(query)+len(reply)-self.max_len>0:
-            query = query[:len(query)+len(reply)-self.max_len]
 
-        # 分词
-        query_id = self.tokenizer.tokenize(query)
-        reply_id = self.tokenizer.tokenize(reply)
-        # 加上特殊标志
-        text_id = ["[CLS]"] + query_id + ["[SEP]"] + reply_id
-
-        # 编码
-        token_id = self.tokenizer.convert_tokens_to_ids(text_id)
-        # 掩码  -》
-        mask = [1] * len(token_id) + [0] * (self.max_len + 2 - len(token_id))
-        # 编码后  -》长度一致
-        token_ids = token_id + [0] * (self.max_len + 2 - len(token_id))
+        tokenized_input = self.tokenizer(
+            query, 
+            reply,
+            max_length=self.max_len,
+            pad_to_max_length=True,
+            truncation=True,
+        )
 
         # 转化成tensor
-        token_ids = torch.tensor(token_ids).to(self.device)
-        mask = torch.tensor(mask).to(self.device)
+        token_ids = torch.tensor(tokenized_input['input_ids']).to(self.device)
+        mask = torch.tensor(tokenized_input['attention_mask']).to(self.device)
         label = torch.tensor(label).to(self.device)
 
         return (token_ids, mask), label
@@ -66,8 +59,7 @@ if __name__ == "__main__":
     train_path = 'datasets/qa_train.jsonl'
     eval_path = 'datasets/qa_dev.jsonl'
     model_path = 'PLM/bert-base-chinese'
-    trainDataset = MyDataset(eval_path)
-    trainDataloader = DataLoader(trainDataset, batch_size=1, shuffle=False)
+    trainDataset = MyDataset(train_path)
+    trainDataloader = DataLoader(trainDataset, batch_size=256, shuffle=False)
     for batch_text, batch_label in trainDataloader:
         print(batch_text, batch_label)
-        exit()
