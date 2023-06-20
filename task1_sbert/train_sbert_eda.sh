@@ -1,0 +1,1 @@
+nohup python train_sbert_eda.py >./logs/robert_eda.log 2>&1 &

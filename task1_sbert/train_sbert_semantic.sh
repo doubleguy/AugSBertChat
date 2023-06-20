@@ -1,0 +1,1 @@
+nohup python train_sbert_semantic.py 2 >./logs/train_sbert_semantic.log 2>&1 &

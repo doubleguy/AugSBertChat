@@ -1,0 +1,1 @@
+nohup python train_sbert.py >./logs/robert.log 2>&1 &
